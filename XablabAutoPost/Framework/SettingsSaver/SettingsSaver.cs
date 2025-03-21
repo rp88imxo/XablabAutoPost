@@ -6,13 +6,14 @@ namespace XablabAutoPost.Framework.SettingsSaver;
 public class ApplicationSettings
 {
     public ApplicationSettings(TimeSpan periodOfPost, string downloadDirectoryPath, string postsSavePath,
-        int postsToFetch, int postsToPublish)
+        int postsToFetch, int postsToPublish, TimeSpan savedPassedTime)
     {
         PeriodOfPost = periodOfPost;
         DownloadDirectoryPath = downloadDirectoryPath;
         PostsSavePath = postsSavePath;
         PostsToFetch = postsToFetch;
         PostsToPublish = postsToPublish;
+        SavedPassedTime = savedPassedTime;
     }
 
     [JsonProperty("period_of_post")] public TimeSpan PeriodOfPost { get; set; }
@@ -26,6 +27,8 @@ public class ApplicationSettings
     [JsonProperty("posts_to_fetch")] public int PostsToFetch { get; set; }
 
     [JsonProperty("posts_to_publish")] public int PostsToPublish { get; set; }
+    
+    [JsonProperty("saved_passed_time")] public TimeSpan SavedPassedTime { get; set; }
 }
 
 public class SettingsSaver : Saver<ApplicationSettings>
@@ -38,7 +41,7 @@ public class SettingsSaver : Saver<ApplicationSettings>
         var data = Load()
                    ?? new ApplicationSettings(TimeSpan.FromHours(1),
                        "D:\\MyStuff\\C#\\XablabAutoPost\\XablabAutoPost\\Data\\Downloaded",
-                       "D:\\MyStuff\\C#\\XablabAutoPost\\XablabAutoPost\\Data\\Posts", 5, 1);
+                       "D:\\MyStuff\\C#\\XablabAutoPost\\XablabAutoPost\\Data\\Posts", 5, 1, TimeSpan.Zero);
 
         Save(data);
 

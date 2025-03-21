@@ -22,7 +22,7 @@ public class UsedPostsSaver : Saver<UsedPostsData>
     public UsedPostsData LoadUsedPosts()
     {
         var data = Load()
-                   ?? new UsedPostsData(new List<string>(){"23232", "252"});
+                   ?? new UsedPostsData(new List<string>());
 
         Save(data);
 

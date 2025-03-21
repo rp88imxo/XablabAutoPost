@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Timers;
+using XablabAutoPost.Core.ConsoleLogger;
 using XablabAutoPost.Framework.PostPublishers;
 using XablabAutoPost.Framework.SettingsSaver;
 using Timer = System.Timers.Timer;
@@ -8,6 +9,8 @@ namespace XablabAutoPost.Framework.Application;
 
 public class ApplicationRunner
 {
+    private const int DelayBetweenUpdates = 3000;
+    
     private readonly ApplicationPersistentProvider _applicationPersistentProvider;
     private readonly PostsFetcherFacade _postsFetcherFacade;
     private readonly IList<IPostPublisher> _postPublishers;
@@ -41,10 +44,25 @@ public class ApplicationRunner
     
     public async Task RunAsync()
     {
+        ConsoleLogger.Log("ApplicationRunner", "Starting auto poster...", ConsoleColor.Gray);
+        
         _cancellationTokenSource = new CancellationTokenSource();
         _cancelationToken = _cancellationTokenSource.Token;
         
         _stopwatch.Start();
+
+        var nextPostTime = TimeSpan.Zero;
+        if (_settings.SavedPassedTime != TimeSpan.Zero)
+        {
+            if (_settings.SavedPassedTime < _settings.PeriodOfPost)
+            {
+                nextPostTime = _settings.PeriodOfPost - _settings.SavedPassedTime;
+            }
+        }
+        else
+        {
+            nextPostTime = _settings.PeriodOfPost;
+        }
         
         while (true)
         {
@@ -53,18 +71,30 @@ public class ApplicationRunner
                 return;
             }
             
-            if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+            if (Console.KeyAvailable && Console.ReadKey(false).Key == ConsoleKey.Escape)
             {
                 Console.WriteLine("Requested Exit");
                 Stop();
                 continue;
             }
             
-            if ( _stopwatch.Elapsed > _settings.PeriodOfPost || _firstLaunch)
+            if ( _stopwatch.Elapsed > nextPostTime || _firstLaunch)
             {
+                _stopwatch.Reset();
+                
+                _settings.SavedPassedTime = _stopwatch.Elapsed;
+                _applicationPersistentProvider.SettingsSaver.Save(_settings);
+                
                 _firstLaunch = false;
                 await MakePost();
             }
+            else
+            {
+                _settings.SavedPassedTime = _stopwatch.Elapsed;
+                _applicationPersistentProvider.SettingsSaver.Save(_settings);
+            }
+            
+            await Task.Delay(DelayBetweenUpdates, _cancelationToken);
         }
     }
     

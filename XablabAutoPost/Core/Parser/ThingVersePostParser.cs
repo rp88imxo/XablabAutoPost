@@ -151,7 +151,8 @@ public class ThingVersePostParser : IDisposable
                    MainImageSource = srcOfImage,
                    FileName = fileName,
                    FilePath = filePath,
-                   PostName = postPreview.PostName
+                   PostName = postPreview.PostName,
+                   PostUri = postPreview.PostUri,
                });
                
                await Task.Delay(500);
@@ -208,6 +209,7 @@ public class PostEntryRaw
     public string MainImageSource { get; set; }
     public string FileName { get; set; }
     public string FilePath{ get; set; }
+    public string PostUri { get; set; }
 }
 
 public class PostPreviewEntry

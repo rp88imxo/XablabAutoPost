@@ -21,6 +21,7 @@ public class PostEntry
     public string MainImagePath { get; set; }
     public string FileName { get; set; }
     public string FilePath{ get; set; }
+    public string PostUri { get; set; }
 }
 
 public class PostCreator
@@ -61,7 +62,8 @@ public class PostCreator
                     PostName = postEntry.PostName,
                     MainImagePath = imagePath,
                     FileName = postEntry.FileName,
-                    FilePath = postEntry.FilePath
+                    FilePath = postEntry.FilePath,
+                    PostUri = postEntry.PostUri
                 });
                 
                 continue;
@@ -86,7 +88,8 @@ public class PostCreator
                 PostName = postEntry.PostName,
                 MainImagePath = imagePath,
                 FileName = postEntry.FileName,
-                FilePath = postEntry.FilePath
+                FilePath = postEntry.FilePath,
+                PostUri = postEntry.PostUri
             });
         }
 
