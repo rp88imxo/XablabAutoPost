@@ -42,7 +42,7 @@ public class VkPublishSettingsSaver : Saver<VkPublishSettings>
     public VkPublishSettings LoadSettings()
     {
         var data = Load()
-                   ?? new VkPublishSettings("PASTE YOUR ACCESS TOKEN HERE", 207932245, "USERNAME", "PASSWORD", 0, "CODE");
+                   ?? new VkPublishSettings("", 207932245, "USERNAME", "PASSWORD", 0, "CODE");
 
         Save(data);
 

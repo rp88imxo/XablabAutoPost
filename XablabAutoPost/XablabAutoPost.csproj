@@ -10,7 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Selenium.WebDriver" Version="4.29.0" />
-    <PackageReference Include="VkNet" Version="1.78.0" />
+    <PackageReference Include="VkNet" Version="1.79.0-alpha-124" />
   </ItemGroup>
 
   <ItemGroup>

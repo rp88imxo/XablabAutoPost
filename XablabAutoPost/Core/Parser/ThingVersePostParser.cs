@@ -59,11 +59,11 @@ public class ThingVersePostParser : IDisposable
         string url = $"https://www.thingiverse.com/?page={parsePreviewsSettings.Page}";
         
         await _driver.Navigate().GoToUrlAsync(url);
-        await Task.Delay(1000);
-            
+        await Task.Delay(5000);
+        
         AcceptCookies();
         
-        var postElements = _driver.FindElements(By.CssSelector(".ItemCardContainer__itemCard--GGbYM"));
+        var postElements = _driver.FindElements(By.CssSelector("div[class^='ItemCardContainer__itemCard--GGbYM']"));
 
         var postPreviews = new List<PostPreviewEntry>();
             

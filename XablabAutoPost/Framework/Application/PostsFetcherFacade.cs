@@ -1,4 +1,5 @@
-﻿using XablabAutoPost.Core.Parser;
+﻿using XablabAutoPost.Core.ConsoleLogger;
+using XablabAutoPost.Core.Parser;
 using XablabAutoPost.Core.PostCreator;
 using XablabAutoPost.Framework.SettingsSaver;
 
@@ -10,7 +11,13 @@ public class PostsFetcherFacade
 
     public PostsFetcherFacade(ApplicationPersistentProvider applicationPersistentProvider)
     {
+        ConsoleLogger.Log("PostsFetcherFacade", "Initializing PostsFetcherFacade...",
+            ConsoleColor.Green);
+        
         _applicationPersistentProvider = applicationPersistentProvider;
+
+        ConsoleLogger.Log("PostsFetcherFacade", "Initialized PostsFetcherFacade successfully!",
+            ConsoleColor.Green);
     }
 
     public async Task<IList<PostEntry>> RequestPostsAsync()

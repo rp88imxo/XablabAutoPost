@@ -26,6 +26,8 @@ public class ApplicationRunner
         PostsFetcherFacade postsFetcherFacade,
         IList<IPostPublisher> postPublishers)
     {
+        ConsoleLogger.Log("ApplicationRunner", "Initializing auto poster...", ConsoleColor.Green);
+        
         _applicationPersistentProvider = applicationPersistentProvider;
         _postsFetcherFacade = postsFetcherFacade;
         _postPublishers = postPublishers;
@@ -35,6 +37,8 @@ public class ApplicationRunner
         _stopwatch = new Stopwatch();
 
         _firstLaunch = true;
+        
+        ConsoleLogger.Log("ApplicationRunner", "Initialized successfully...", ConsoleColor.Green);
     }
 
     public void Stop()
@@ -80,13 +84,15 @@ public class ApplicationRunner
             
             if ( _stopwatch.Elapsed > nextPostTime || _firstLaunch)
             {
-                _stopwatch.Reset();
+                _firstLaunch = false;
+                await MakePost();
+                
+                _stopwatch.Restart();
                 
                 _settings.SavedPassedTime = _stopwatch.Elapsed;
                 _applicationPersistentProvider.SettingsSaver.Save(_settings);
                 
-                _firstLaunch = false;
-                await MakePost();
+                nextPostTime = _settings.PeriodOfPost;
             }
             else
             {
