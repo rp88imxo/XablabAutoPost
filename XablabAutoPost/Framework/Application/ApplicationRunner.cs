@@ -36,7 +36,7 @@ public class ApplicationRunner
 
         _stopwatch = new Stopwatch();
 
-        _firstLaunch = true;
+        _firstLaunch = false;
         
         ConsoleLogger.Log("ApplicationRunner", "Initialized successfully...", ConsoleColor.Green);
     }

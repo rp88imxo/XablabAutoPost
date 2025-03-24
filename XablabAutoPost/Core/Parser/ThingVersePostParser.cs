@@ -43,12 +43,12 @@ public class ThingVersePostParser : IDisposable
         _thingVersePostParserSettings = thingVersePostParserSettings;
         
         var options = new ChromeOptions();
-        options.AddArgument("--headless");
-        options.AddArgument("--disable-gpu");
-        options.AddArgument("--no-sandbox");
+        // options.AddArgument("--headless");
+        // options.AddArgument("--disable-gpu");
+        // options.AddArgument("--no-sandbox");
         
         options.AddUserProfilePreference("download.default_directory", _thingVersePostParserSettings.DownloadDirectoryPath);
-        options.AddUserProfilePreference("intl.accept_languages", "nl");
+        options.AddUserProfilePreference("intl.accept_languages", "ru");
         options.AddUserProfilePreference("disable-popup-blocking", "true");
         
         _driver = new ChromeDriver(options);
