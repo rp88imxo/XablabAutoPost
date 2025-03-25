@@ -8,6 +8,11 @@ namespace XablabAutoPost.Framework.Application;
 public class PostsFetcherFacade
 {
     private readonly ApplicationPersistentProvider _applicationPersistentProvider;
+    private readonly ThingVersePostParser _thingVersePostParser;
+    private readonly PostCreator _postCreator;
+    private ApplicationSettings _settings;
+    private DownloadedPosts _loadedPosts;
+    private UsedPostsData _usedPosts;
 
     public PostsFetcherFacade(ApplicationPersistentProvider applicationPersistentProvider)
     {
@@ -15,41 +20,45 @@ public class PostsFetcherFacade
             ConsoleColor.Green);
         
         _applicationPersistentProvider = applicationPersistentProvider;
+        
+         _settings = _applicationPersistentProvider.SettingsSaver.LoadSettings();
+         _loadedPosts = _applicationPersistentProvider.DownloadedPostsSaver.LoadPosts();
+         _usedPosts = _applicationPersistentProvider.UsedPostsSaver.LoadUsedPosts();
+        
+        var thingVersePostParserSettings =
+            new ThingVersePostParserSettings(_settings.DownloadDirectoryPath);
 
+        _thingVersePostParser = new ThingVersePostParser(thingVersePostParserSettings);
+
+        _postCreator =
+            new PostCreator(
+                new PostCreatorSettings(_settings.PostsSavePath));
+        
         ConsoleLogger.Log("PostsFetcherFacade", "Initialized PostsFetcherFacade successfully!",
             ConsoleColor.Green);
     }
 
     public async Task<IList<PostEntry>> RequestPostsAsync()
     {
-        var settings = _applicationPersistentProvider.SettingsSaver.LoadSettings();
-        var loadedPosts = _applicationPersistentProvider.DownloadedPostsSaver.LoadPosts();
-        var usedPosts = _applicationPersistentProvider.UsedPostsSaver.LoadUsedPosts();
-
-        var thingVersePostParserSettings =
-            new ThingVersePostParserSettings(settings.DownloadDirectoryPath);
-
-        var thingVersePostParser = new ThingVersePostParser(thingVersePostParserSettings);
-
-        var postCreator =
-            new PostCreator(
-                new PostCreatorSettings(settings.PostsSavePath));
-
+        _settings = _applicationPersistentProvider.SettingsSaver.LoadSettings();
+        _loadedPosts = _applicationPersistentProvider.DownloadedPostsSaver.LoadPosts();
+        _usedPosts = _applicationPersistentProvider.UsedPostsSaver.LoadUsedPosts();
+        
         var notUsedPosts = new List<PostPreviewEntry>();
 
         int currentPage = 1;
-        while (notUsedPosts.Count < settings.PostsToFetch)
+        while (notUsedPosts.Count < _settings.PostsToFetch)
         {
-            var previews = await thingVersePostParser.ParsePreviews(new ParsePreviewsSettings(currentPage));
+            var previews = await _thingVersePostParser.ParsePreviews(new ParsePreviewsSettings(currentPage));
             
             foreach (var preview in previews)
             {
-                if (!usedPosts.UsedPostsIds.Contains(preview.Id))
+                if (!_usedPosts.UsedPostsIds.Contains(preview.Id))
                 {
                     notUsedPosts.Add(preview);
                 }
 
-                if (notUsedPosts.Count >= settings.PostsToFetch)
+                if (notUsedPosts.Count >= _settings.PostsToFetch)
                 {
                     break;
                 }
@@ -60,7 +69,7 @@ public class PostsFetcherFacade
 
         var postsToLoad = new List<PostPreviewEntry>();
 
-        var loadedPostsHashSet = loadedPosts.PostEntries.Select(x => x.PostId).ToHashSet();
+        var loadedPostsHashSet = _loadedPosts.PostEntries.Select(x => x.PostId).ToHashSet();
 
         foreach (var notUsedPost in notUsedPosts)
         {
@@ -71,21 +80,21 @@ public class PostsFetcherFacade
         }
 
         var postEntries =
-            await thingVersePostParser.ParsePosts(postsToLoad,
+            await _thingVersePostParser.ParsePosts(postsToLoad,
                 new ParsePostSettings());
 
-        var resultPosts = await postCreator.CreatePostsFromRawAsync(postEntries);
+        var resultPosts = await _postCreator.CreatePostsFromRawAsync(postEntries);
 
         foreach (var resultPost in resultPosts)
         {
-            loadedPosts.PostEntries.Add(resultPost);
+            _loadedPosts.PostEntries.Add(resultPost);
         }
 
-        _applicationPersistentProvider.DownloadedPostsSaver.Save(loadedPosts);
+        _applicationPersistentProvider.DownloadedPostsSaver.Save(_loadedPosts);
 
         var newPosts = new List<PostEntry>();
         var notUsedPostsHashSet = notUsedPosts.Select(x => x.Id).ToHashSet();
-        foreach (var loadedPostsPostEntry in loadedPosts.PostEntries)
+        foreach (var loadedPostsPostEntry in _loadedPosts.PostEntries)
         {
             if (notUsedPostsHashSet.Contains(loadedPostsPostEntry.PostId))
             {

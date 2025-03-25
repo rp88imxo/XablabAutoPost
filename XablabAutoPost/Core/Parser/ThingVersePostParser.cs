@@ -78,7 +78,7 @@ public class ThingVersePostParser : IDisposable
                 var postNameElement =
                     postElement.FindElement(By.CssSelector(".ItemCardHeader__itemCardHeader--cPULo"));
 
-                var postName = postNameElement.Text.Trim();
+                var postName = postNameElement.Text.Trim().Replace("/", "_");
 
                 if (postName == "Advertisement")
                 {
@@ -179,7 +179,7 @@ public class ThingVersePostParser : IDisposable
     private (string, string) DownloadFile(PostPreviewEntry postPreview)
     {
         var fileName = $"{postPreview.PostName} - {postPreview.Id}.zip";
-        var filePath = $"{_thingVersePostParserSettings.DownloadDirectoryPath}/{fileName}";
+        var filePath = $"{_thingVersePostParserSettings.DownloadDirectoryPath}{Path.DirectorySeparatorChar}{fileName}";
 
         if (File.Exists(filePath))
         {

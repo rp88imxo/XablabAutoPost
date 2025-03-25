@@ -3,9 +3,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using VkNet;
 using VkNet.Enums.Filters;
+using VkNet.Exception;
 using VkNet.Model;
 using XablabAutoPost.Core.ConsoleLogger;
 using XablabAutoPost.Core.PostCreator;
+using XablabAutoPost.Framework.Promocode;
 using XablabAutoPost.Framework.SettingsSaver;
 using XablabAutoPost.Framework.VK;
 
@@ -14,6 +16,7 @@ namespace XablabAutoPost.Framework.PostPublishers;
 public class VkPostPublisher : IPostPublisher
 {
     private readonly ApplicationPersistentProvider _applicationPersistentProvider;
+    private readonly IDiscountProvider _discountProvider;
     private readonly UsedPostsData _usedPosts;
     private readonly ApplicationSettings _settings;
     private VkApi _api;
@@ -21,9 +24,10 @@ public class VkPostPublisher : IPostPublisher
     private readonly WebClient _wc;
     private readonly VkMessagesData _vkMessagesTemplatesData;
 
-    public VkPostPublisher(ApplicationPersistentProvider applicationPersistentProvider)
+    public VkPostPublisher(ApplicationPersistentProvider applicationPersistentProvider, IDiscountProvider discountProvider)
     {
         _applicationPersistentProvider = applicationPersistentProvider;
+        _discountProvider = discountProvider;
         _usedPosts = _applicationPersistentProvider.UsedPostsSaver.LoadUsedPosts();
         _settings = _applicationPersistentProvider.SettingsSaver.LoadSettings();
         _vkPublishSettings = _applicationPersistentProvider.VkPublishSettingsSaver.LoadSettings();
@@ -39,14 +43,21 @@ public class VkPostPublisher : IPostPublisher
         ConsoleLogger.Log("VKPostPublisher", "Initializing vk api...", ConsoleColor.Green);
         
         _api = new VkApi(null, new CapcthaSolver());
+
+        Authorize();
         
+        ConsoleLogger.Log("VKPostPublisher", "Initialized vk api successfully!", ConsoleColor.Green);
+    }
+
+    private void Authorize()
+    {
         var token = _vkPublishSettings.AccessToken;
 
         if (!string.IsNullOrEmpty(token))
         {
             _api.Authorize(new ApiAuthParams
             {
-               AccessToken = _vkPublishSettings.AccessToken,
+                AccessToken = _vkPublishSettings.AccessToken,
             });
         }
         else
@@ -70,8 +81,6 @@ public class VkPostPublisher : IPostPublisher
             var code = Console.ReadLine();
             return code!;
         }
-        
-        ConsoleLogger.Log("VKPostPublisher", "Initialized vk api successfully!", ConsoleColor.Green);
     }
 
     public async Task PublishPostsAsync(IList<PostEntry> postEntries)
@@ -94,12 +103,6 @@ public class VkPostPublisher : IPostPublisher
 
         try
         {
-            if (!_usedPosts.UsedPostsIds.Contains(postEntry.PostId))
-            {
-                _usedPosts.UsedPostsIds.Add(postEntry.PostId);
-                _applicationPersistentProvider.UsedPostsSaver.Save(_usedPosts);
-            }
-
             ulong groupId = _vkPublishSettings.GroupId;
 
             var postPhotoAttachment = await CreatePostPhotoAttachmentAsync(groupId, postEntry);
@@ -137,8 +140,23 @@ public class VkPostPublisher : IPostPublisher
 
             _api.Wall.Post(wallPostParams);
 
+            if (!_usedPosts.UsedPostsIds.Contains(postEntry.PostId))
+            {
+                _usedPosts.UsedPostsIds.Add(postEntry.PostId);
+                _applicationPersistentProvider.UsedPostsSaver.Save(_usedPosts);
+            }
+            
             ConsoleLogger.Log("Vk Post Publish", $"Published post {postEntry.PostName} with id {postEntry.PostId}",
                 ConsoleColor.Green);
+        }
+        catch (UserAuthorizationFailException userAuthorizationFailException)
+        {
+            ConsoleLogger.Log("Vk Post Publish",
+                "Token has been expired! Trying to authorize again...",
+                ConsoleColor.Red);
+            
+            _vkPublishSettings.AccessToken = string.Empty;
+            Authorize();
         }
         catch (Exception e)
         {
@@ -154,7 +172,9 @@ public class VkPostPublisher : IPostPublisher
         
         var messageTemplate = GetRandomMessageTemplate();
         
-        stringBuilder.AppendFormat(messageTemplate, postEntry.PostName, "10", "xablabVk10");
+        var discountEntry = _discountProvider.GetDiscount();
+        
+        stringBuilder.AppendFormat(messageTemplate, postEntry.PostName, discountEntry.Value, discountEntry.Code);
         
         if (modelAttachment != null)
         {
@@ -183,7 +203,9 @@ public class VkPostPublisher : IPostPublisher
         var response = await UploadFile(uploadServer.UploadUrl,
             postEntry.FilePath, Path.GetExtension(postEntry.FilePath));
 
-        return _api.Docs.Save(response, postEntry.PostName)[0].Instance;
+        var resultAttachments = _api.Docs.Save(response, postEntry.PostName);
+        
+        return resultAttachments.Count == 1 ? resultAttachments[0].Instance : null;
     }
 
     private async Task<IReadOnlyCollection<Photo>?> CreatePostPhotoAttachmentAsync(ulong groupId, PostEntry postEntry)
