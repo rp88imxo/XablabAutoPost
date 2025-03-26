@@ -179,9 +179,11 @@ public class ThingVersePostParser : IDisposable
     private (string, string) DownloadFile(PostPreviewEntry postPreview)
     {
         var fileName = $"{postPreview.PostName} - {postPreview.Id}.zip";
-        var filePath = $"{_thingVersePostParserSettings.DownloadDirectoryPath}{Path.DirectorySeparatorChar}{fileName}";
+        //var filePath = $"{_thingVersePostParserSettings.DownloadDirectoryPath}{Path.DirectorySeparatorChar}{fileName}";
 
-        if (File.Exists(filePath))
+        var filePath = GetRequiredFilePath();
+        
+        if (!string.IsNullOrEmpty(filePath))
         {
             return (fileName, filePath);
         }
@@ -191,7 +193,23 @@ public class ThingVersePostParser : IDisposable
         downloadButton.Click();
                
         WebDriverWait waitDownload = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
-        waitDownload.Until<bool>(x=> File.Exists(filePath));
+        
+        waitDownload.Until<bool>(HasRequiredFile);
+
+        bool HasRequiredFile(IWebDriver arg)
+        {
+            var requiredFilePath = GetRequiredFilePath();
+            return !string.IsNullOrEmpty(requiredFilePath);
+        }
+
+        string GetRequiredFilePath()
+        {
+            var allFiles = Directory.GetFiles(_thingVersePostParserSettings.DownloadDirectoryPath);
+            var requiredFilePath = allFiles.FirstOrDefault(x => x.Contains(postPreview.Id)) ?? string.Empty;
+            return requiredFilePath;
+        }
+        
+        filePath = GetRequiredFilePath();
 
         return (fileName, filePath);
     }
