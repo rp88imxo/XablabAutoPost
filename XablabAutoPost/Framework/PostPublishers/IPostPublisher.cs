@@ -2,8 +2,14 @@
 
 namespace XablabAutoPost.Framework.PostPublishers;
 
+public enum PublishResult
+{
+    Success,
+    Fail
+}
+
 public interface IPostPublisher
 {
     public Task PublishPostsAsync(IList<PostEntry> postEntries);
-    public Task PublishPostAsync(PostEntry postEntry);
+    public Task<PublishResult> PublishPostAsync(PostEntry postEntry);
 }

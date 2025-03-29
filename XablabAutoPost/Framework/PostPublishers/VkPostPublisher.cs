@@ -85,19 +85,31 @@ public class VkPostPublisher : IPostPublisher
 
     public async Task PublishPostsAsync(IList<PostEntry> postEntries)
     {
+        int publishedCount = 0;
+        int failCount = 0;
         for (var index = 0; index < postEntries.Count; index++)
         {
-            if (index + 1 > _settings.PostsToPublish)
+            if (publishedCount >= _settings.PostsToPublish)
             {
                 return;
             }
 
             var postEntry = postEntries[index];
-            await PublishPostAsync(postEntry);
+            var result = await PublishPostAsync(postEntry);
+            if (result == PublishResult.Success)
+            {
+                publishedCount++;
+            }
+            else
+            {
+                failCount++;
+            }
         }
+        
+        ConsoleLogger.Log("VkPostPublisher", $"Published post statistics: Successes count {publishedCount}, fail count {failCount}", ConsoleColor.Gray);
     }
 
-    public async Task PublishPostAsync(PostEntry postEntry)
+    public async Task<PublishResult> PublishPostAsync(PostEntry postEntry)
     {
         await Task.Delay(200);
 
@@ -148,6 +160,8 @@ public class VkPostPublisher : IPostPublisher
             
             ConsoleLogger.Log("Vk Post Publish", $"Published post {postEntry.PostName} with id {postEntry.PostId}",
                 ConsoleColor.Green);
+            
+            return PublishResult.Success;
         }
         catch (UserAuthorizationFailException userAuthorizationFailException)
         {
@@ -157,12 +171,15 @@ public class VkPostPublisher : IPostPublisher
             
             _vkPublishSettings.AccessToken = string.Empty;
             Authorize();
+            return PublishResult.Fail;
         }
         catch (Exception e)
         {
             ConsoleLogger.Log("Vk Post Publish",
                 $"Failed to publish a post {postEntry.PostName} with id {postEntry.PostId}, error is {e.Message}, stacktrace {e.StackTrace}",
                 ConsoleColor.Red);
+            
+            return PublishResult.Fail;
         }
     }
 

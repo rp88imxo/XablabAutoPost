@@ -22,6 +22,7 @@ public class PostEntry
     public string FileName { get; set; }
     public string FilePath{ get; set; }
     public string PostUri { get; set; }
+    public bool HasWatermark { get; set; }
 }
 
 public class PostCreator
