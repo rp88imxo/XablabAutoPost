@@ -5,11 +5,20 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.Fonts;
+using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace XablabAutoPost.Framework.Utils;
 
 public class WatermarkProcessor
 {
+    public WatermarkProcessor()
+    {
+        Configuration.Default.ImageFormatsManager.SetEncoder(JpegFormat.Instance, new JpegEncoder()
+        {
+            Quality = 90
+        });
+    }
+    
     public bool TryAddWatermark(string imagePath, string text)
     {
         try
@@ -24,7 +33,7 @@ public class WatermarkProcessor
             // Или загрузка из файла (поместите Roboto-Regular.ttf в папку проекта, установите "Copy to Output Directory"):
             // FontCollection collection = new ();
             // FontFamily family = collection.Add("Roboto-Regular.ttf"); // Путь к файлу шрифта
-
+            
             using (var image = Image.Load(imagePath)) // Загружаем изображение
             {
                 // Определяем размер шрифта (можно сделать зависимым от размера изображения)

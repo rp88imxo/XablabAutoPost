@@ -115,6 +115,12 @@ public class VkPostPublisher : IPostPublisher
 
         try
         {
+            if (!_usedPosts.UsedPostsIds.Contains(postEntry.PostId))
+            {
+                _usedPosts.UsedPostsIds.Add(postEntry.PostId);
+                _applicationPersistentProvider.UsedPostsSaver.Save(_usedPosts);
+            }
+            
             ulong groupId = _vkPublishSettings.GroupId;
 
             var postPhotoAttachment = await CreatePostPhotoAttachmentAsync(groupId, postEntry);
@@ -151,12 +157,6 @@ public class VkPostPublisher : IPostPublisher
             };
 
             _api.Wall.Post(wallPostParams);
-
-            if (!_usedPosts.UsedPostsIds.Contains(postEntry.PostId))
-            {
-                _usedPosts.UsedPostsIds.Add(postEntry.PostId);
-                _applicationPersistentProvider.UsedPostsSaver.Save(_usedPosts);
-            }
             
             ConsoleLogger.Log("Vk Post Publish", $"Published post {postEntry.PostName} with id {postEntry.PostId}",
                 ConsoleColor.Green);

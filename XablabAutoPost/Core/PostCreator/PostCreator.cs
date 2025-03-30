@@ -1,5 +1,6 @@
 ﻿using XablabAutoPost.Core.Parser;
 using XablabAutoPost.Core.ImageDownloader;
+using XablabAutoPost.Framework.Utils;
 
 namespace XablabAutoPost.Core.PostCreator;
 
@@ -29,11 +30,13 @@ public class PostCreator
 {
     private readonly PostCreatorSettings _postCreatorSettings;
     private readonly ImageDownloader.ImageDownloader _imageDownloader;
+    private readonly ImageFormatProcessor _imageFileProcessor;
 
     public PostCreator(PostCreatorSettings postCreatorSettings)
     {
         _postCreatorSettings = postCreatorSettings;
         _imageDownloader = new ImageDownloader.ImageDownloader();
+        _imageFileProcessor = new ImageFormatProcessor();
     }
     
     public async Task<IList<PostEntry>> CreatePostsFromRawAsync(IList<PostEntryRaw> postEntries)
@@ -56,12 +59,14 @@ public class PostCreator
                 }
                 
                 imagePath = files[0];
+
+                var newPath = _imageFileProcessor.Process(imagePath);
                 
                 postsReady.Add(new PostEntry
                 {
                     PostId = postEntry.PostId,
                     PostName = postEntry.PostName,
-                    MainImagePath = imagePath,
+                    MainImagePath = newPath,
                     FileName = postEntry.FileName,
                     FilePath = postEntry.FilePath,
                     PostUri = postEntry.PostUri
@@ -81,6 +86,8 @@ public class PostCreator
                 imagePath = Path.Combine(postDirectory, $"mainImage{fileExtension}");
 
                 await File.WriteAllBytesAsync(imagePath, loadingContext.ImageBytes);
+                
+                imagePath = _imageFileProcessor.Process(imagePath);
             }
             
             postsReady.Add(new PostEntry
