@@ -123,7 +123,7 @@ public class ThingVersePostParser : IDisposable
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            // ignored
         }
     }
 
