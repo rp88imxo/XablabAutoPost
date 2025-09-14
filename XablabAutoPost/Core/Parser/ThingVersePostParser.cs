@@ -71,9 +71,8 @@ public class ThingVersePostParser : IDisposable
         {
             try
             {
-                var link = postElement.FindElement(By.CssSelector(".ItemCardHeader__itemCardHeader--cPULo"));
-
-                var href = link.GetAttribute("href");
+                var linkElement = postElement.FindElement(By.CssSelector("a.ItemCardHeader__itemCardTitle--kmjbt"));
+                var href = linkElement.GetAttribute("href");
 
                 var postNameElement =
                     postElement.FindElement(By.CssSelector(".ItemCardHeader__itemCardHeader--cPULo"));
@@ -189,7 +188,7 @@ public class ThingVersePostParser : IDisposable
         }
         
         var downloadButton = _driver.FindElement(By.CssSelector(
-            "button[class = 'tv-button tv-button--primary tv-button--large tv-button--rounded tv-button--icon-right']"));
+            "button.tv-button.tv-button--primary.tv-button--large.tv-button--rounded-large.tv-button--icon-right"));
         downloadButton.Click();
                
         WebDriverWait waitDownload = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
